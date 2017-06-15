@@ -27,6 +27,20 @@ $container['cache'] = function ($c) {
     return new \App\Cache\RedisAdapter($client);
 };
 
+$container['db'] = function ($c) {
+    return new \PDO('mysql:dbname=slim_redis;host=127.0.0.1', 'root');
+};
+
+$app->get('/users', function ($request, $response) {
+    $users = $this->cache->remember('users', 10, function () {
+        $users = $this->db->query('SELECT * FROM users')->fetchAll(PDO::FETCH_ASSOC);
+        
+        return json_encode($users);
+    });
+    
+    return $response->withHeader('Content-Type', 'application/json')->write($users);
+});
+
 $app->get('/', function ($request, $response) {
     $users = $this->cache->remember('users', 10, function () {
         $users = [
